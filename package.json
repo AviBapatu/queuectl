@@ -1,0 +1,20 @@
+{
+  "name": "queuectl",
+  "version": "1.0.0",
+  "description": "A robust, production-grade CLI-driven background job queue system using SQLite",
+  "main": "db.js",
+  "bin": {
+    "queuectl": "./bin/queuectl.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "commander": "^13.1.0",
+    "express": "^5.2.1",
+    "uuid": "^11.0.5"
+  },
+  "author": "",
+  "license": "ISC"
+}

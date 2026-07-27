@@ -1,0 +1,5 @@
+node_modules/
+queuectl.db*
+*.log
+.env
+.DS_Store
