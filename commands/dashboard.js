@@ -15,11 +15,13 @@ module.exports = function (program, db) {
 
       app.get('/', (req, res) => {
         // 1. Fetch Aggregated States
-        const states = db.prepare(`SELECT state, COUNT(*) as count FROM jobs GROUP BY state`).all();
-        const stateMap = { pending: 0, processing: 0, completed: 0, failed: 0, dead: 0 };
-        states.forEach((s) => {
-          stateMap[s.state] = s.count;
-        });
+        const stateMap = {
+          pending: (db.prepare("SELECT COUNT(*) as count FROM jobs WHERE state = 'pending' AND attempts = 0").get() || { count: 0 }).count,
+          processing: (db.prepare("SELECT COUNT(*) as count FROM jobs WHERE state = 'processing'").get() || { count: 0 }).count,
+          completed: (db.prepare("SELECT COUNT(*) as count FROM jobs WHERE state = 'completed'").get() || { count: 0 }).count,
+          failed: (db.prepare("SELECT COUNT(*) as count FROM jobs WHERE state = 'pending' AND attempts > 0").get() || { count: 0 }).count,
+          dead: (db.prepare("SELECT COUNT(*) as count FROM jobs WHERE state = 'dead'").get() || { count: 0 }).count,
+        };
 
         // 2. Fetch Detailed Active Workers
         const workers = db

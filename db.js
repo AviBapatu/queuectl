@@ -62,8 +62,8 @@ function initDb() {
   `);
 
   // Insert default configs if they don't exist
+  db.exec(`DELETE FROM config WHERE key = 'max-retries'`);
   db.exec(`INSERT OR IGNORE INTO config (key, value) VALUES ('backoff_base', '2')`);
-  db.exec(`INSERT OR IGNORE INTO config (key, value) VALUES ('max-retries', '3')`);
   db.exec(`INSERT OR IGNORE INTO config (key, value) VALUES ('max_retries', '3')`);
   db.exec(`INSERT OR IGNORE INTO config (key, value) VALUES ('timeout_ms', '30000')`);
 }

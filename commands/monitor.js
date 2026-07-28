@@ -7,10 +7,18 @@ function registerMonitorCommands(program, db) {
       console.log('=== QueueCTL Production Dashboard ===\n');
 
       // 1. Job counts by state
-      const states = ['pending', 'processing', 'completed', 'failed', 'dead'];
-      const summary = states.map((state) => {
-        const row = db.prepare('SELECT COUNT(*) as count FROM jobs WHERE state = ?').get(state);
-        return { State: state, Count: row ? row.count : 0 };
+      const states = ['pending', 'processing', 'completed', 'failed (backing off)', 'dead'];
+      const summary = states.map((stateLabel) => {
+        if (stateLabel === 'failed (backing off)') {
+          const row = db.prepare("SELECT COUNT(*) as count FROM jobs WHERE state = 'pending' AND attempts > 0").get();
+          return { State: stateLabel, Count: row ? row.count : 0 };
+        } else if (stateLabel === 'pending') {
+          const row = db.prepare("SELECT COUNT(*) as count FROM jobs WHERE state = 'pending' AND attempts = 0").get();
+          return { State: stateLabel, Count: row ? row.count : 0 };
+        } else {
+          const row = db.prepare('SELECT COUNT(*) as count FROM jobs WHERE state = ?').get(stateLabel);
+          return { State: stateLabel, Count: row ? row.count : 0 };
+        }
       });
       console.log('--- Job Counts by State ---');
       console.table(summary);

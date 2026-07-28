@@ -15,7 +15,9 @@ function registerJobCommands(program, db) {
         }
 
         const id = payload.id || uuidv4();
-        const maxRetries = payload.max_retries !== undefined ? payload.max_retries : 3;
+        const configRetries = db.prepare("SELECT value FROM config WHERE key = 'max_retries'").get();
+        const defaultRetries = configRetries ? parseInt(configRetries.value, 10) : 3;
+        const maxRetries = payload.max_retries !== undefined ? payload.max_retries : defaultRetries;
         const priority = payload.priority || 0;
         const now = Math.floor(Date.now() / 1000);
         const runAt = payload.run_at !== undefined ? payload.run_at : now;
@@ -43,8 +45,12 @@ function registerJobCommands(program, db) {
       let params = [];
 
       if (options.state) {
-        query += ' WHERE state = ?';
-        params.push(options.state);
+        if (options.state === 'failed') {
+          query += " WHERE state = 'pending' AND attempts > 0";
+        } else {
+          query += ' WHERE state = ?';
+          params.push(options.state);
+        }
       }
 
       const jobs = db.prepare(query).all(...params);
