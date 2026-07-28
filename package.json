@@ -7,7 +7,23 @@
     "queuectl": "./bin/queuectl.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test-verify.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "queue",
+    "job",
+    "worker",
+    "sqlite",
+    "cli",
+    "background-jobs",
+    "dead-letter-queue"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AviBapatu/queuectl.git"
   },
   "dependencies": {
     "better-sqlite3": "^11.8.1",
@@ -15,6 +31,6 @@
     "express": "^5.2.1",
     "uuid": "^11.0.5"
   },
-  "author": "",
+  "author": "AviBapatu",
   "license": "ISC"
 }

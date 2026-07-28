@@ -18,11 +18,12 @@ function registerJobCommands(program, db) {
         const maxRetries = payload.max_retries !== undefined ? payload.max_retries : 3;
         const priority = payload.priority || 0;
         const now = Math.floor(Date.now() / 1000);
+        const runAt = payload.run_at !== undefined ? payload.run_at : now;
 
         db.prepare(`
           INSERT INTO jobs (id, command, state, attempts, max_retries, priority, run_at, created_at, updated_at) 
           VALUES (?, ?, 'pending', 0, ?, ?, ?, ?, ?)
-        `).run(id, payload.command, maxRetries, priority, now, now, now);
+        `).run(id, payload.command, maxRetries, priority, runAt, now, now);
 
         console.log(`Successfully enqueued job ${id}`);
       } catch (err) {

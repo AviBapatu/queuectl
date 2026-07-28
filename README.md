@@ -1,6 +1,6 @@
 # QueueCTL (Node.js Edition)
 
-> **📺 Video Demonstration:** [Watch the 3-Minute Loom Walkthrough & Architecture Tour Here](#)
+> **Video Demonstration:** [Watch the 3-Minute Loom Walkthrough and Architecture Tour Here](#)
 
 QueueCTL is a robust, production-grade, CLI-driven background job processing system built in Node.js and backed by SQLite in Write-Ahead Logging (`WAL`) mode. It features atomic job claiming across multiple parallel worker processes, exponential backoff with a Dead Letter Queue (DLQ), strict job timeouts, output log persistence, automated crash recovery under 60 seconds, and a real-time web dashboard.
 
@@ -37,11 +37,19 @@ For detailed visual architecture diagrams (High-Level Component Flow, Job State 
 
 ---
 
+## Prerequisites
+
+- **Node.js** >= 18.x (required for `better-sqlite3` native binding)
+- **SQLite** >= 3.35.0 (required for `UPDATE ... RETURNING` syntax; bundled via `better-sqlite3`)
+- **npm** >= 9.x
+
+---
+
 ## Setup Instructions
 
 1. **Clone and Install Dependencies:**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/AviBapatu/queuectl.git
    cd queuectl
    npm install
    ```
@@ -50,7 +58,7 @@ For detailed visual architecture diagrams (High-Level Component Flow, Job State 
    ```bash
    npm link
    ```
-   (This maps the `queuectl` binary globally as configured in `package.json`).
+   This maps the `queuectl` binary globally as configured in `package.json`.
 
 ---
 
@@ -60,7 +68,7 @@ For detailed visual architecture diagrams (High-Level Component Flow, Job State 
 
 | Command | Description | Key Flags / Options | Output Format |
 | :--- | :--- | :--- | :--- |
-| `queuectl enqueue '<JSON>'` | Enqueues a new job into the queue. | None (auto-generates UUID v4) | Success confirmation message |
+| `queuectl enqueue '<JSON>'` | Enqueues a new job into the queue. | `command` (required), `priority`, `max_retries`, `run_at`, `id` | Success confirmation message |
 | `queuectl list` | Lists jobs filtered by state. | `--state <state>`, `--json` | Strict JSON array (`--json`) or Table |
 | `queuectl worker start` | Starts background worker processing. | `--count <N>` (spawns `N` child processes) | Foreground execution logs |
 | `queuectl worker stop` | Gracefully shuts down active workers. | None (sends `SIGTERM` via PID registry) | Shutdown notification summary |
@@ -68,7 +76,7 @@ For detailed visual architecture diagrams (High-Level Component Flow, Job State 
 | `queuectl metrics` | Computes historical operational throughput. | None | Formatted health analytics text |
 | `queuectl dashboard` | Launches the real-time web UI. | `-p, --port <number>` (default: `3000`) | HTTP server startup logs |
 | `queuectl logs <id>` | Inspects captured stdout/stderr output logs. | None | Formatted text block of execution logs |
-| `queuectl config` | Manages persistent system settings. | `set <key> <value>`, `get <key>` | Configuration confirmation |
+| `queuectl config <action> <key> [value]` | Manages persistent system settings. | `set <key> <value>`, `get <key>` | Configuration confirmation |
 | `queuectl dlq` | Manages Dead Letter Queue quarantine. | `list [--json]`, `retry <id>` | JSON array or status message |
 | `queuectl clear` | Wipes jobs and worker state (Danger). | `-f, --force` | Clearance confirmation message |
 
@@ -80,6 +88,12 @@ For detailed visual architecture diagrams (High-Level Component Flow, Job State 
   ```bash
   queuectl enqueue '{"command": "echo Hello", "priority": 10, "max_retries": 3}'
   ```
+
+- **Enqueue a Scheduled Job (Runs in the Future):**
+  ```bash
+  queuectl enqueue '{"command": "echo Scheduled", "run_at": 1722200000}'
+  ```
+  The `run_at` field accepts a Unix epoch timestamp. Workers will not claim this job until the system clock passes that timestamp.
 
 - **Start Worker Fleet:**
   ```bash
@@ -118,7 +132,7 @@ For detailed visual architecture diagrams (High-Level Component Flow, Job State 
 - **Graceful Shutdown:**
   ```bash
   queuectl worker stop
-  # (Tambor/Alias: worker-stop)
+  # (Alias: worker-stop)
   ```
 
 ---
@@ -150,4 +164,34 @@ A dedicated `demo/` folder is provided with pre-built shell scripts to test and 
   By default, `queuectl list --state pending` only displays pending jobs. To view completed or dead jobs, use the **QueueCTL Mission Control** web dashboard (`queuectl dashboard -p 3000`), which includes a persistent **Recent History (Completed & Dead)** table at the bottom of the page.
 - **What happens if a worker process is abruptly killed with `kill -9` (`SIGKILL`)?**
   The background **Sweeper** loop running in surviving workers scans every 15 seconds for any `'processing'` job with `heartbeat_at < now - 30`. It automatically recovers abandoned jobs back to `'pending'` within a worst-case window of 45 seconds.
+
+---
+
+## Project Structure
+
+```
+queuectl/
+  bin/queuectl.js        # CLI entry point (Commander.js)
+  commands/
+    jobs.js              # enqueue, list, logs
+    workers.js           # worker start, worker stop
+    monitor.js           # status, metrics
+    config.js            # config set/get
+    dlq.js               # dlq list, dlq retry
+    admin.js             # clear --force
+    dashboard.js         # Express web dashboard
+  db.js                  # SQLite WAL mode initialization and schema
+  queries.js             # Atomic UPDATE ... RETURNING claim query
+  worker.js              # Execution engine, heartbeat, sweeper, backoff
+  test-verify.js         # 10-test automated verification suite
+  demo/                  # Pre-built showcase scripts
+  ARCHITECTURE.md        # Visual Mermaid diagrams
+  DECISIONS.md           # Architectural trade-off explanations
+```
+
+---
+
+## License
+
+ISC
 
