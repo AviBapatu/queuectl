@@ -12,7 +12,7 @@ This diagram illustrates how user commands interact with the modular CLI structu
 graph TD
     User([User / Automated Script]) --> CLI["CLI Entry Point: bin/queuectl.js"]
 
-    subgraph CLI Commands & Modules
+    subgraph CLICommands [CLI Commands and Modules]
         CLI --> Jobs["commands/jobs.js <br> enqueue, list --json, logs"]
         CLI --> Monitor["commands/monitor.js <br> status, metrics"]
         CLI --> Workers["commands/workers.js <br> worker start/stop"]
@@ -21,7 +21,7 @@ graph TD
         CLI --> Dashboard["commands/dashboard.js <br> Express Web UI"]
     end
 
-    subgraph Persistence Layer (SQLite WAL Mode)
+    subgraph Persistence [Persistence Layer - SQLite WAL Mode]
         Jobs --> DB[(SQLite Database: queuectl.db)]
         Workers --> DB
         Config --> DB
@@ -29,7 +29,7 @@ graph TD
         Dashboard --> DB
     end
 
-    subgraph Worker Fleet (Child Processes)
+    subgraph WorkersFleet [Worker Fleet - Child Processes]
         Workers -->|child_process.fork| W1[Worker Process PID 1]
         Workers -->|child_process.fork| W2[Worker Process PID N]
         
@@ -89,19 +89,19 @@ sequenceDiagram
     participant S as Surviving Worker's Sweeper Loop
 
     Note over W,DB: Worker claims job and updates heartbeat every 10s
-    W->>DB: UPDATE jobs SET state='processing', heartbeat_at=now
+    W->>DB: UPDATE jobs SET state=processing, heartbeat_at=now
     
-    Note over W: OS sends SIGKILL (kill -9)<br/>Process halts instantly; no cleanup runs.
+    Note over W: OS sends SIGKILL kill -9 and halts process instantly without cleanup
     
-    rect rgb(255, 230, 230)
-        Note over W,DB: Failure Mode: Job is stuck in 'processing'<br/>heartbeat_at timestamp becomes stale (> 30s old)
+    rect #FFE6E6
+        Note over W,DB: Failure Mode - Job is stuck in processing and heartbeat_at timestamp becomes stale over 30s old
     end
 
     loop Every 15 Seconds
-        S->>DB: Query: SELECT * FROM jobs WHERE state='processing' AND heartbeat_at < (now - 30)
-        DB--->S: Returns abandoned job record
-        S->>DB: UPDATE jobs SET state='pending', locked_by=NULL
+        S->>DB: Query jobs WHERE state=processing and heartbeat_at is older than 30s
+        DB-->>S: Returns abandoned job record
+        S->>DB: UPDATE jobs SET state=pending, locked_by=NULL
     end
 
-    Note over S,DB: Job is successfully restored to 'pending'<br/>Worst-case recovery guaranteed under 45-60s.
+    Note over S,DB: Job is successfully restored to pending with recovery guaranteed under 60s
 ```
