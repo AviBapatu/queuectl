@@ -1,6 +1,19 @@
 # QueueCTL (Node.js Edition)
 
+> **📺 Video Demonstration:** [Watch the 3-Minute Loom Walkthrough & Architecture Tour Here](#)
+
 QueueCTL is a robust, production-grade, CLI-driven background job processing system built in Node.js and backed by SQLite in Write-Ahead Logging (`WAL`) mode. It features atomic job claiming across multiple parallel worker processes, exponential backoff with a Dead Letter Queue (DLQ), strict job timeouts, output log persistence, automated crash recovery under 60 seconds, and a real-time web dashboard.
+
+---
+
+## Quick-Start (TL;DR)
+
+Test QueueCTL instantly in your terminal in 3 simple steps:
+```bash
+npm install && npm link
+queuectl enqueue '{"command": "echo Hello World"}'
+queuectl worker start
+```
 
 ---
 
@@ -199,3 +212,15 @@ A dedicated `demo/` folder is provided with pre-built shell scripts to test and 
 - `./demo/seed-mix.sh` — Seeds a rich mix of fast, slow, high-priority, scheduled, and doomed jobs.
 - `./demo/trigger-timeout.sh` — Demonstrates strict execution timeout limits and backoff.
 - `./demo/trigger-oom-log.sh` — Demonstrates massive stdout capture and OOM log truncation.
+
+---
+
+## Troubleshooting & FAQ
+
+- **How do I reset the database to a clean slate during local development or before a demo?**
+  Run `queuectl clear --force` to instantly truncate all jobs, workers, and DLQ entries while preserving your schema. Alternatively, you can delete `queuectl.db*` (`rm -f queuectl.db*`); QueueCTL will automatically re-initialize a fresh schema on the next command.
+- **Why do jobs seem to "disappear" after finishing?**
+  By default, `queuectl list --state pending` only displays pending jobs. To view completed or dead jobs, use the **QueueCTL Mission Control** web dashboard (`queuectl dashboard -p 3000`), which includes a persistent **Recent History (Completed & Dead)** table at the bottom of the page.
+- **What happens if a worker process is abruptly killed with `kill -9` (`SIGKILL`)?**
+  The background **Sweeper** loop running in surviving workers scans every 15 seconds for any `'processing'` job with `heartbeat_at < now - 30`. It automatically recovers abandoned jobs back to `'pending'` within a worst-case window of 45 seconds.
+
