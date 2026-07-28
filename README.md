@@ -68,8 +68,8 @@ graph TD
         W2 -->|child_process.exec| OS2[Shell Command Execution]
     end
 
-    classDef db fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef process fill:#bbf,stroke:#333,stroke-width:1px;
+    classDef db fill:#f9f,stroke:#333,stroke-width:2px,color:#000;
+    classDef process fill:#bbf,stroke:#333,stroke-width:1px,color:#000;
     class DB db;
     class W1,W2 process;
 ```
