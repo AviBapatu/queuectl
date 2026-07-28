@@ -1,6 +1,8 @@
 # QueueCTL (Node.js Edition)
 
 > **Video Demonstration:** [Watch the 3-Minute Loom Walkthrough and Architecture Tour Here](#)
+>
+> **System Architecture:** [View Visual Mermaid Diagrams (Component Flow, State Machine, Crash Recovery)](ARCHITECTURE.md)
 
 QueueCTL is a robust, production-grade, CLI-driven background job processing system built in Node.js and backed by SQLite in Write-Ahead Logging (`WAL`) mode. It features atomic job claiming across multiple parallel worker processes, exponential backoff with a Dead Letter Queue (DLQ), strict job timeouts, output log persistence, automated crash recovery under 60 seconds, and a real-time web dashboard.
 
@@ -17,23 +19,17 @@ queuectl worker start
 
 ---
 
-## Features & Architectural Highlights
+## Features and Architectural Highlights
 
 - **Atomic Job Claiming:** Uses SQLite 3.35+ `UPDATE ... RETURNING *` queries within WAL mode to mathematically eliminate race conditions across multiple OS processes.
 - **Crash Recovery (The Sweeper):** A background loop checks for jobs with stale heartbeats (`heartbeat_at < now - 30`), automatically recovering abandoned jobs from `SIGKILL` (`kill -9`) within a worst-case window of 45 seconds.
 - **Modular CLI Architecture:** Clean separation of concerns with domain-specific registrars (`commands/jobs.js`, `commands/workers.js`, `commands/monitor.js`, `commands/config.js`, `commands/dlq.js`, `commands/dashboard.js`), featuring standard Unix `man` help text and a clean, zero-emoji professional output format.
-- **Robust IPC & Ghost PID Fix:** Manages active workers via a database registry and sends OS `SIGTERM` signals, gracefully handling stale processes via `ESRCH` catch blocks.
-- **Advanced Hardening & Observability:**
+- **Robust IPC and Ghost PID Fix:** Manages active workers via a database registry and sends OS `SIGTERM` signals, gracefully handling stale processes via `ESRCH` catch blocks.
+- **Advanced Hardening and Observability:**
   - **Strict Job Timeouts:** Dynamic configuration (`timeout_ms`) injected into Node's `child_process.exec`.
   - **OOM Protection:** Automatic log truncation (`max 10,000 chars`) preventing database bloat.
-  - **Real-Time Web Dashboard:** A zero-dependency, light-themed Tailwind CSS mission control center running on Express with 2-second auto-refresh and persistent historical tracking (`queuectl dashboard`).
-  - **Historical Metrics & Logs:** Native SQL aggregate analytics (`queuectl metrics`) and captured stdout/stderr inspection (`queuectl logs <id>`).
-
----
-
-## System Architecture & Workflow Diagrams
-
-For detailed visual architecture diagrams (High-Level Component Flow, Job State Machine, and Crash Recovery Sweeper Sequence), see [ARCHITECTURE.md](ARCHITECTURE.md).
+  - **Real-Time Web Dashboard:** A light-themed Tailwind CSS mission control center running on Express with 2-second auto-refresh and persistent historical tracking (`queuectl dashboard`).
+  - **Historical Metrics and Logs:** Native SQL aggregate analytics (`queuectl metrics`) and captured stdout/stderr inspection (`queuectl logs <id>`).
 
 ---
 
